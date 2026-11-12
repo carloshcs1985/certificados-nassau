@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Certificados Digitais</title>
+<meta name="description" content="Controle de validade dos certificados digitais do grupo Nassau">
+<meta name="theme-color" content="#edf1f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Certificados">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112,600;112,800&family=Familjen+Grotesk:wght@400;500;600&family=Chivo+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: cabeçalho + abas (Nassau / Pessoal / Solicitações); resumo, faixa de alerta, régua de vencimentos por mês, filtros e tabela; painéis laterais para cadastro, renovação e pedido */
+:root{
+  --bg:#edf1f1; --surface:#ffffff; --sunk:#e1e7e8; --fg:#142023; --muted:#566669; --line:#ccd6d8;
+  --accent:#0f6577; --accent-ink:#ffffff; --accent-soft:#dcecef;
+  --s-venc:#c4312f; --s-venc-bg:#fbe9e8;
+  --s-ren:#b8610a; --s-ren-bg:#fdf0de;
+  --s-at:#8a7400; --s-at-bg:#f7f1d2;
+  --s-ok:#1d7a4c; --s-ok-bg:#e2f3ea;
+  --s-sem:#6b777a; --s-sem-bg:#e7ebec;
+  --warn-bg:#fdf0de; --warn-fg:#6e3c00; --warn-line:#efc489;
+  --bar:#0f6577; --grid:#dfe6e7;
+  --display:"Archivo","Segoe UI",system-ui,sans-serif;
+  --body:"Familjen Grotesk","Segoe UI",system-ui,sans-serif;
+  --mono:"Chivo Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1517; --surface:#162024; --sunk:#1e2a2e; --fg:#e4ecee; --muted:#93a3a7; --line:#2a383c;
+  --accent:#4fb3c7; --accent-ink:#06191e; --accent-soft:#16343b;
+  --s-venc:#ff7b73; --s-venc-bg:#3a1b1a;
+  --s-ren:#f3a048; --s-ren-bg:#3a2712;
+  --s-at:#d9c24a; --s-at-bg:#332d10;
+  --s-ok:#5cc98f; --s-ok-bg:#15301f;
+  --s-sem:#9aa7aa; --s-sem-bg:#253034;
+  --warn-bg:#33240f; --warn-fg:#f4c98a; --warn-line:#6a4a1c;
+  --bar:#4fb3c7; --grid:#223034; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1517; --surface:#162024; --sunk:#1e2a2e; --fg:#e4ecee; --muted:#93a3a7; --line:#2a383c;
+  --accent:#4fb3c7; --accent-ink:#06191e; --accent-soft:#16343b;
+  --s-venc:#ff7b73; --s-venc-bg:#3a1b1a;
+  --s-ren:#f3a048; --s-ren-bg:#3a2712;
+  --s-at:#d9c24a; --s-at-bg:#332d10;
+  --s-ok:#5cc98f; --s-ok-bg:#15301f;
+  --s-sem:#9aa7aa; --s-sem-bg:#253034;
+  --warn-bg:#33240f; --warn-fg:#f4c98a; --warn-line:#6a4a1c;
+  --bar:#4fb3c7; --grid:#223034; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px}
+.brand{display:flex;align-items:center;gap:18px;min-width:0}
+.logo{position:relative;flex:none;height:96px;aspect-ratio:181/240;max-width:100%}
+.logo .stripes{position:absolute;inset:0;background:var(--fg);-webkit-mask:url("logo-listras.png") center/contain no-repeat;mask:url("logo-listras.png") center/contain no-repeat}
+.logo img{position:absolute;inset:0;width:100%;height:100%}
+@media (max-width:480px){.logo{height:64px}.brand{gap:12px}}
+h1{font-family:var(--display);font-weight:800;font-stretch:112%;font-size:clamp(28px,4.4vw,44px);line-height:1;margin:0;letter-spacing:-.02em;text-wrap:balance}
+h1 span{color:var(--accent)}
+h2.sec{font-family:var(--display);font-stretch:112%;font-weight:800;font-size:20px;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0;max-width:50ch}
+.headacts{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:0;border-radius:9px;padding:9px 16px;font-weight:600;font-size:14px;background:var(--accent);color:var(--accent-ink);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.small{padding:5px 10px;font-size:13px;font-weight:500}
+.btn.danger{background:var(--s-venc);color:#fff}
+.notice{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line);border-radius:10px;padding:10px 14px;font-size:14px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:3px;background:var(--sunk);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--fg);border-radius:7px;padding:6px 12px;font-size:13.5px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.seg button .n{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:4px}
+.seg button .n.hot{color:var(--s-ren);font-weight:600}
+.tabs button{font-size:15px;padding:7px 16px}
+
+/* Resumo */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0;border:0;text-align:left;color:var(--fg)}
+button.stat:hover{background:var(--sunk)}
+.stat[aria-pressed="true"]{box-shadow:inset 0 -3px 0 var(--sc,var(--accent))}
+.stat .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.stat .k i{width:8px;height:8px;border-radius:50%;background:var(--sc,var(--accent))}
+.stat .v{font-family:var(--display);font-weight:800;font-stretch:112%;font-size:27px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .h{font-size:12.5px;color:var(--muted)}
+
+/* Alerta */
+.alerts{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;color:var(--warn-fg)}
+.alerts .ah{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.alerts .ah b{font-family:var(--display);font-stretch:112%;font-size:17px}
+.alist{display:flex;flex-direction:column;gap:6px}
+.al{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 12px;background:var(--surface);color:var(--fg);border-radius:10px;padding:8px 12px}
+.al .t{min-width:0}
+.al .t b{overflow-wrap:anywhere}
+.al .t small{display:block;color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+.al .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.al{grid-template-columns:auto 1fr}.al .acts{grid-column:1/-1;justify-content:flex-start}}
+.mailbox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13.5px}
+.addr{font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--fg);border-radius:6px;padding:2px 8px;user-select:all;overflow-wrap:anywhere}
+
+/* Pills de situação */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;border-radius:99px;padding:2px 10px;white-space:nowrap;color:var(--sc);background:var(--sbg)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--sc)}
+.st-venc{--sc:var(--s-venc);--sbg:var(--s-venc-bg)}
+.st-ren{--sc:var(--s-ren);--sbg:var(--s-ren-bg)}
+.st-at{--sc:var(--s-at);--sbg:var(--s-at-bg)}
+.st-ok{--sc:var(--s-ok);--sbg:var(--s-ok-bg)}
+.st-sem{--sc:var(--s-sem);--sbg:var(--s-sem-bg)}
+
+/* Régua de vencimentos */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.ph .tot{font-size:13px;color:var(--muted)}
+.ruler-scroll{overflow-x:auto}
+.ruler{display:grid;grid-template-columns:repeat(13,minmax(44px,1fr));gap:6px;min-width:640px;align-items:end;padding-top:18px}
+.mo{border:0;background:transparent;color:var(--fg);padding:0;display:flex;flex-direction:column;align-items:stretch;gap:4px;min-width:0}
+.mo .col{height:96px;display:flex;align-items:flex-end;background:linear-gradient(var(--grid),var(--grid)) bottom/100% 1px no-repeat}
+.mo .col i{display:block;width:100%;height:var(--h);min-height:0;background:var(--bar);border-radius:5px 5px 0 0;position:relative}
+.mo.past .col i{background:var(--s-venc)}
+.mo.soon .col i{background:var(--s-ren)}
+.mo .col i span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;padding-bottom:2px;color:var(--fg)}
+.mo .lb{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;border-radius:5px;padding:1px 0}
+.mo[aria-pressed="true"] .lb{background:var(--fg);color:var(--bg)}
+.mo:hover .col i{filter:brightness(1.1)}
+.mo.zero{cursor:default}
+
+/* Filtros */
+.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.search{flex:1 1 220px;min-width:0;max-width:360px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:8px 12px;font:inherit;font-size:14px}
+.fl{display:inline-flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted);min-width:0;max-width:100%}
+.fl select{text-transform:none;letter-spacing:0;font-weight:400;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:7px 10px;font:inherit;font-size:14px;max-width:100%}
+.linkbtn{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:14px;padding:8px 2px;text-decoration:underline;text-underline-offset:3px}
+.spacer{flex:1}
+.fsum{font-size:13.5px;color:var(--muted);margin:-6px 0 0}
+
+/* Tabela */
+.tbl{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--sunk)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.emp b{font-weight:600;overflow-wrap:anywhere}
+td.emp small{display:block;color:var(--muted);font-size:12.5px}
+td.m{font-family:var(--mono);font-size:13px;white-space:nowrap}
+td.d{white-space:nowrap}
+td.d small{display:block;color:var(--muted);font-size:12px;font-family:var(--mono)}
+td.acts{text-align:right;white-space:nowrap}
+td.acts .btn{margin-left:4px}
+tr.dim td{color:var(--muted)}
+.bad{color:var(--s-venc);font-size:11px;font-weight:700;margin-left:6px;font-family:var(--body)}
+@media (max-width:760px){
+  .tbl{border:0;background:transparent;overflow:visible}
+  table,tbody,tr,td{display:block}
+  thead{display:none}
+  tbody{display:flex;flex-direction:column;gap:10px}
+  tr{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+  td{border:0;padding:0}
+  td.emp{grid-column:1/-1}
+  td.m{grid-column:1/2}
+  td.mun{grid-column:1/-1;color:var(--muted);font-size:13px}
+  td.resp{grid-column:1/-1;font-size:13px;color:var(--muted)}
+  td.resp::before{content:"Resp. legal: "}
+  td.acts{grid-column:1/-1;text-align:left;border-top:1px solid var(--line);padding-top:8px;margin-top:4px;white-space:normal}
+  td.acts .btn{margin:0 6px 4px 0}
+}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:32px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty b{color:var(--fg);font-family:var(--display);font-stretch:112%;font-size:18px}
+
+/* Solicitações */
+.reqs{display:flex;flex-direction:column;gap:10px}
+.req{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:start}
+.req.done{opacity:.66}
+.req .rt{min-width:0}
+.req .rt b{font-family:var(--display);font-stretch:112%;font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.req .rt .m{font-family:var(--mono);font-size:13px}
+.req .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.req .acts{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px}
+.req .exists{font-size:13px;color:var(--warn-fg);background:var(--warn-bg);border-radius:6px;padding:3px 8px;grid-column:1/-1}
+
+/* Painéis laterais */
+.scrim{position:fixed;inset:0;background:rgba(6,14,16,.48);z-index:20;display:flex;justify-content:flex-end}
+.sheet{background:var(--surface);width:min(480px,100%);height:100%;overflow-y:auto;
+  padding:22px max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 20px;
+  padding-top:calc(22px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:14px;box-shadow:-12px 0 30px -12px rgba(0,0,0,.4)}
+.sheet h2{font-family:var(--display);font-stretch:112%;font-weight:800;font-size:24px;margin:0}
+.sheet h3{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:6px 0 -4px;font-weight:700}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f label,.f .lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.f input,.f select,.f textarea{font:inherit;font-size:15px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+.f input.mono{font-family:var(--mono);font-size:14.5px}
+.f textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint.ok{color:var(--s-ok)}
+.hint.warn{color:var(--warn-fg);background:var(--warn-bg);border-radius:6px;padding:4px 8px}
+.quick{display:flex;flex-wrap:wrap;gap:6px}
+.quick button{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:6px 12px;font-family:var(--mono);font-size:13px}
+.chk{display:flex;gap:8px;align-items:center;font-size:15px}
+.chk input{width:18px;height:18px}
+.formacts{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+.err{color:var(--s-venc);font-size:13px;min-height:1em;margin:0}
+.done-box{background:var(--s-ok-bg);color:var(--fg);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.done-box b{color:var(--s-ok)}
+.mailtext{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;user-select:all;overflow-wrap:anywhere}
+.mylist{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.mylist div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:5px 0}
+.mylist span{min-width:0;overflow-wrap:anywhere}
+
+.themesw{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:9px;padding:8px 11px}
+.themesw .track{position:relative;width:36px;height:20px;border-radius:99px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line);transition:background .15s}
+.themesw .knob{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--fg);transition:transform .18s}
+.themesw[aria-checked="true"] .track{background:var(--accent)}
+.themesw[aria-checked="true"] .knob{transform:translateX(16px);background:var(--accent-ink)}
+.themesw[aria-checked="false"] .sun,.themesw[aria-checked="true"] .moon{color:var(--fg)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.ownerbadge{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 8px}
+@media (max-width:480px){.row2{grid-template-columns:1fr}.search{max-width:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;padding-top:calc(28px + env(safe-area-inset-top,0px))!important;padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))!important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo" role="img" aria-label="Nassau"><span class="stripes"></span><img src="logo-faixa.png" alt=""></div>
+      <div style="min-width:0">
+      <h1>Certificados <span>Digitais</span></h1>
+      <p class="sub" id="sub">Validade dos certificados e-CNPJ e e-CPF (ICP-Brasil). A situação muda para <b>Renovar</b> quando faltam 30 dias ou menos.</p>
+    </div>
+    </div>
+    <div class="headacts">
+      <span class="ownerbadge" id="ownerBadge" hidden>Modo edição</span>
+      <button type="button" class="themesw" id="tema" role="switch" aria-checked="false" aria-label="Tema escuro" title="Alternar tema claro/escuro">
+        <svg class="sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <span class="track"><span class="knob"></span></span>
+        <svg class="moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button class="btn ghost" id="novoCert" hidden>+ Certificado</button>
+      <button class="btn ghost" id="entrar">Entrar</button>
+      <button class="btn ghost" id="sair" hidden>Sair</button>
+      <button class="btn" id="pedir">Solicitar certificado</button>
+    </div>
+  </header>
+
+  <div class="notice" id="aviso" hidden></div>
+
+  <div class="seg tabs" id="tabs" hidden></div>
+
+  <div id="vLista" style="display:flex;flex-direction:column;gap:20px">
+    <section class="stats" id="stats" aria-label="Resumo"></section>
+
+    <section class="alerts" id="alerts" aria-label="Vencimentos próximos" hidden>
+      <div class="ah"><b id="alTitle"></b>
+        <div class="mailbox" id="mailbox" hidden>
+          <span>Avisar por e-mail:</span><span class="addr" id="addrAl"></span>
+          <button class="btn small" id="copiarAviso" type="button">Copiar aviso</button>
+          <a class="btn ghost small" id="mailAviso" href="#" target="_blank" rel="noopener">Abrir no e-mail</a>
+        </div>
+      </div>
+      <div class="alist" id="alist"></div>
+    </section>
+
+    <section class="panel" aria-label="Vencimentos por mês">
+      <div class="ph"><h2 class="sec">Vencimentos por mês</h2><span class="tot" id="rulerInfo">Toque num mês para ver só os certificados que vencem nele.</span></div>
+      <div class="ruler-scroll"><div class="ruler" id="ruler"></div></div>
+    </section>
+
+    <section class="bar" aria-label="Filtros">
+      <input class="search" id="busca" type="search" placeholder="Buscar empresa, CNPJ, município, responsável…" aria-label="Buscar">
+      <label class="fl">Município<select id="fmun"></select></label>
+      <label class="fl">Responsável<select id="fresp"></select></label>
+      <label class="fl">Ordenar<select id="fsort">
+        <option value="validade">Vencimento mais próximo</option>
+        <option value="empresa">Empresa (A–Z)</option>
+        <option value="municipio">Município</option>
+      </select></label>
+      <button type="button" class="linkbtn" id="limpar" hidden>Limpar filtros</button>
+    </section>
+    <p class="fsum" id="fsum"></p>
+    <section id="lista" aria-live="polite"></section>
+  </div>
+
+  <div id="vPedidos" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="bar"><div class="seg" id="fped"></div></div>
+    <section class="reqs" id="reqs"></section>
+  </div>
+</div>
+
+<!-- Cadastro / edição -->
+<div class="scrim" id="scrimC" hidden>
+  <form class="sheet" id="formC" novalidate>
+    <h2 id="cTitle">Novo certificado</h2>
+    <div class="f"><label for="cGrupo">Planilha</label>
+      <select id="cGrupo"><option value="nassau">Nassau (visível a quem tem o link)</option><option value="pessoal">Pessoal (só você vê)</option></select></div>
+    <div class="f"><label for="cEmpresa">Empresa ou titular</label><input id="cEmpresa" required placeholder="Razão social ou nome completo"></div>
+    <div class="row2">
+      <div class="f"><label for="cDoc">CNPJ ou CPF</label><input id="cDoc" class="mono" inputmode="text" placeholder="00.000.000/0000-00" autocomplete="off"><span class="hint" id="cDocHint"></span></div>
+      <div class="f"><label for="cMun">Município/UF</label><input id="cMun" list="dl-mun" placeholder="Recife/PE"></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="cTem" checked> Já tem certificado emitido</label>
+    <div class="row2" id="cValRow">
+      <div class="f"><label for="cVal">Validade</label><input id="cVal" type="date"></div>
+      <div class="f"><label for="cTipo">Tipo</label><select id="cTipo"><option value="">Não informado</option><option>A1</option><option>A3</option></select></div>
+    </div>
+    <div class="f"><label for="cResp">Responsável legal</label><input id="cResp" list="dl-resp" placeholder="GUILHERME"></div>
+    <div class="f"><label for="cObs">Observações</label><textarea id="cObs" placeholder="Certificadora, mídia (token/cartão), onde está instalado…"></textarea>
+      <span class="hint">Não anote senhas aqui. Tudo o que fica na planilha Nassau aparece para quem tem o link.</span></div>
+    <p class="err" id="cErr"></p>
+    <div class="formacts">
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn">Salvar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Renovar -->
+<div class="scrim" id="scrimR" hidden>
+  <form class="sheet" id="formR" novalidate>
+    <h2>Registrar renovação</h2>
+    <p class="hint" id="rInfo" style="margin:0"></p>
+    <div class="f"><label for="rVal">Nova validade</label><input id="rVal" type="date" required></div>
+    <div class="quick" id="rQuick">
+      <button type="button" data-y="1">+1 ano</button><button type="button" data-y="2">+2 anos</button><button type="button" data-y="3">+3 anos</button>
+    </div>
+    <span class="hint">Os botões somam a partir de hoje. A1 costuma valer 1 ano; A3, de 1 a 3 anos (ou até 5, conforme a certificadora).</span>
+    <div class="f"><label for="rTipo">Tipo</label><select id="rTipo"><option value="">Não informado</option><option>A1</option><option>A3</option></select></div>
+    <p class="err" id="rErr"></p>
+    <div class="formacts">
+      <button type="button" class="btn ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn">Salvar renovação</button>
+    </div>
+  </form>
+</div>
+
+<!-- Solicitar -->
+<div class="scrim" id="scrimP" hidden>
+  <form class="sheet" id="formP" novalidate>
+    <h2>Solicitar certificado</h2>
+    <p class="hint" style="margin:0">Informe a empresa que precisa de um certificado digital novo. Carlos recebe o pedido e cuida da emissão.</p>
+    <div id="pCampos" style="display:flex;flex-direction:column;gap:14px">
+      <div class="f"><label for="pEmpresa">Razão social da empresa</label><input id="pEmpresa" required placeholder="Ex.: ITAPESSOCA AGRO INDUSTRIAL S/A - Filial"></div>
+      <div class="f"><label for="pCnpj">CNPJ</label><input id="pCnpj" class="mono" required placeholder="00.000.000/0000-00" autocomplete="off"><span class="hint" id="pCnpjHint"></span></div>
+      <div class="row2">
+        <div class="f"><label for="pNome">Seu nome</label><input id="pNome" placeholder="Quem está pedindo"></div>
+        <div class="f"><label for="pContato">E-mail ou telefone</label><input id="pContato" placeholder="Para retorno"></div>
+      </div>
+      <div class="hp" aria-hidden="true"><label for="pSite">Site</label><input id="pSite" tabindex="-1" autocomplete="off"></div>
+      <div class="f"><label for="pObs">Observação (opcional)</label><textarea id="pObs" placeholder="Urgência, tipo A1 ou A3, responsável legal…"></textarea></div>
+      <p class="err" id="pErr"></p>
+      <div class="formacts">
+        <button type="button" class="btn ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn" id="pEnviar">Enviar solicitação</button>
+      </div>
+    </div>
+    <div id="pOk" class="done-box" hidden>
+      <b>Solicitação registrada.</b>
+      <span>Carlos recebe o pedido na lista dele. A situação aparece em “Suas solicitações” quando você abrir este formulário de novo.</span>
+      <div class="formacts"><button type="button" class="btn ghost small" id="pOutra">Pedir outro</button><button type="button" class="btn small" data-close>Fechar</button></div>
+    </div>
+    <div id="pMail" class="done-box" hidden>
+      <b>Falta enviar por e-mail.</b>
+      <span>Não foi possível enviar pela página agora. Envie o texto abaixo para <span class="addr" id="addrP"></span>.</span>
+      <div class="mailtext" id="pMailText"></div>
+      <div class="formacts">
+        <button type="button" class="btn small" id="pCopiar">Copiar texto</button>
+        <a class="btn ghost small" id="pMailLink" href="#" target="_blank" rel="noopener">Abrir no e-mail</a>
+        <button type="button" class="btn ghost small" data-close>Fechar</button>
+      </div>
+      <span class="hint">O botão de e-mail pode não abrir em todos os aparelhos. Se não abrir, copie o texto e mande pelo seu e-mail.</span>
+    </div>
+    <div id="pMeus" hidden>
+      <h3>Suas solicitações</h3>
+      <div class="mylist" id="pMeusList"></div>
+    </div>
+  </form>
+</div>
+
+
+<!-- Entrar -->
+<div class="scrim" id="scrimL" hidden>
+  <form class="sheet" id="formL" novalidate>
+    <h2>Entrar</h2>
+    <p class="hint" style="margin:0">Só o administrador precisa entrar. Para ver a lista ou pedir um certificado, não é preciso login.</p>
+    <div class="f"><label for="lEmail">E-mail</label><input id="lEmail" type="email" autocomplete="username" inputmode="email"></div>
+    <div class="f"><label for="lSenha">Senha</label><input id="lSenha" type="password" autocomplete="current-password"></div>
+    <p class="err" id="lErr"></p>
+    <div class="done-box" id="lOk" hidden></div>
+    <div class="formacts">
+      <button type="button" class="btn ghost" id="lCriar">Primeiro acesso: criar senha</button>
+      <button type="submit" class="btn">Entrar</button>
+    </div>
+  </form>
+</div>
+
+<datalist id="dl-mun"></datalist><datalist id="dl-resp"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script src="script.js"></script>
+</body>
+</html>
